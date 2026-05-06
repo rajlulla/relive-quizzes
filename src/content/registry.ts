@@ -1,4 +1,5 @@
 import type { Quiz } from "@/lib/quiz/types";
+import { bodyCheckQuiz } from "./body-check";
 import { ivDripQuiz } from "./iv-drip";
 
 /**
@@ -9,7 +10,7 @@ import { ivDripQuiz } from "./iv-drip";
  *      `<QuizRunner quiz={...} />`.
  *   3. Pushing the quiz into this array.
  */
-export const quizzes: Quiz[] = [ivDripQuiz];
+export const quizzes: Quiz[] = [bodyCheckQuiz, ivDripQuiz];
 
 export function getQuizBySlug(slug: string): Quiz | undefined {
   return quizzes.find((q) => q.slug === slug);

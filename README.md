@@ -4,7 +4,8 @@ Personalized recommendation quizzes for Relive Health — built on Next.js with 
 
 Live quizzes:
 
-- **`/iv-drip`** — Find Your Perfect IV Drip (8 questions, 12 drip results)
+- **`/iv-drip`** — Find Your Perfect IV Drip (8 questions, 12 drip results, top-tag scoring)
+- **`/body-check`** — Is Your Body Trying to Tell You Something? (10 questions, tier-based result + biomarker recommendations, count-tier scoring)
 
 ## Tech stack
 

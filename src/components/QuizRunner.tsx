@@ -1,8 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Answers, Quiz } from "@/lib/quiz/types";
-import { getExtraKeys, getRecommendationKey } from "@/lib/quiz/scoring";
+import type {
+  Answers,
+  CountTierQuiz,
+  Quiz,
+  TopTagQuiz,
+} from "@/lib/quiz/types";
+import {
+  evaluateCountTier,
+  getExtraKeys,
+  getRecommendationKey,
+} from "@/lib/quiz/scoring";
 import { ProgressHeader } from "./ProgressHeader";
 
 type Stage = "intro" | "quiz" | "result";
@@ -48,9 +57,20 @@ export function QuizRunner({ quiz }: QuizRunnerProps) {
           onAnswer={submitAnswer}
         />
       )}
-      {stage === "result" && (
-        <ResultCard quiz={quiz} answers={answers} onRestart={restart} />
-      )}
+      {stage === "result" &&
+        (quiz.scoring === "top-tag" ? (
+          <TopTagResultCard
+            quiz={quiz}
+            answers={answers}
+            onRestart={restart}
+          />
+        ) : (
+          <CountTierResultCard
+            quiz={quiz}
+            answers={answers}
+            onRestart={restart}
+          />
+        ))}
     </div>
   );
 }
@@ -68,14 +88,10 @@ function IntroCard({ quiz, onStart }: { quiz: Quiz; onStart: () => void }) {
         <br />
         <span className="italic text-brand-cyan">{quiz.title.accent}</span>
       </h1>
-      <p className="mx-auto mb-9 max-w-[34ch] text-center text-[16px] leading-[1.6] text-brand-muted">
+      <p className="mx-auto mb-9 max-w-[40ch] text-center text-[16px] leading-[1.6] text-brand-muted">
         {quiz.subtitle}
       </p>
-      <button
-        type="button"
-        onClick={onStart}
-        className="brand-cta-pill w-full"
-      >
+      <button type="button" onClick={onStart} className="brand-cta-pill w-full">
         Let&rsquo;s Get Started →
       </button>
       <style jsx>{`
@@ -119,17 +135,34 @@ function QuizCard({
   onAnswer: (yes: boolean) => void;
 }) {
   const q = quiz.questions[currentIndex];
+  const sectionLabel =
+    q.section &&
+    quiz.scoring === "count-tier" &&
+    quiz.sections?.find((s) => s.key === q.section)?.label;
 
   return (
     <div className="brand-card px-8 py-10 sm:px-12 sm:py-12">
       <ProgressHeader current={currentIndex} total={quiz.questions.length} />
       <div key={currentIndex} className="brand-fade-in">
-        <div className="mb-5 text-center text-[42px] leading-none">
-          {q.emoji}
-        </div>
-        <p className="mx-auto mb-9 max-w-[36ch] text-center font-serif text-[24px] leading-[1.4] text-brand-slate">
+        {sectionLabel && (
+          <div className="section-label mb-3 text-center text-brand-cyan">
+            {sectionLabel}
+          </div>
+        )}
+        {q.emoji && (
+          <div className="mb-5 text-center text-[42px] leading-none">
+            {q.emoji}
+          </div>
+        )}
+        <p className="mx-auto mb-2 max-w-[36ch] text-center font-serif text-[24px] leading-[1.4] text-brand-slate">
           {q.text}
         </p>
+        {q.hint && (
+          <p className="mx-auto mb-8 max-w-[40ch] text-center text-[14px] italic leading-[1.5] text-brand-muted">
+            {q.hint}
+          </p>
+        )}
+        {!q.hint && <div className="mb-9" />}
       </div>
       <div className="flex gap-3.5">
         <button
@@ -189,14 +222,14 @@ function QuizCard({
   );
 }
 
-/* ─── Result ──────────────────────────────────────────────────────────── */
+/* ─── Result: top-tag (IV Drip) ──────────────────────────────────────── */
 
-function ResultCard({
+function TopTagResultCard({
   quiz,
   answers,
   onRestart,
 }: {
-  quiz: Quiz;
+  quiz: TopTagQuiz;
   answers: Answers;
   onRestart: () => void;
 }) {
@@ -282,11 +315,148 @@ function ResultCard({
         </>
       )}
 
-      <button
-        type="button"
-        onClick={onRestart}
-        className="restart-btn mt-7 w-full"
-      >
+      <RestartButton onClick={onRestart} />
+    </div>
+  );
+}
+
+/* ─── Result: count-tier (bloodwork) ─────────────────────────────────── */
+
+function CountTierResultCard({
+  quiz,
+  answers,
+  onRestart,
+}: {
+  quiz: CountTierQuiz;
+  answers: Answers;
+  onRestart: () => void;
+}) {
+  const { yesCount, tier, biomarkers } = useMemo(
+    () => evaluateCountTier(quiz, answers),
+    [quiz, answers],
+  );
+  const cta = quiz.cta;
+  const phoneHref = `tel:${cta.providerPhone.replace(/[^0-9+]/g, "")}`;
+  const ctaHref = cta.href ?? phoneHref;
+
+  return (
+    <div className="brand-card px-8 py-9 sm:px-12 sm:py-10">
+      <header className="mb-7 text-center">
+        <span className="pill-badge mb-4">{tier.label}</span>
+        <div className="mb-2.5 text-[52px] leading-none">{tier.emoji}</div>
+        <h2 className="mb-2 font-serif text-[30px] leading-tight text-brand-slate sm:text-[34px]">
+          {tier.headline}
+        </h2>
+        <p className="mb-3 text-[14px] font-medium italic text-brand-cyan">
+          {yesCount} of {quiz.questions.length} signals noted
+        </p>
+        <p className="mx-auto max-w-[44ch] text-[15px] leading-[1.7] text-brand-result-desc">
+          {tier.description}
+        </p>
+      </header>
+
+      {biomarkers.length > 0 && (
+        <>
+          <div className="my-6 h-px bg-brand-border" />
+          <div className="section-label mb-4">
+            {quiz.biomarkersLabel ?? "Biomarkers Worth Checking"}
+          </div>
+          <ul className="space-y-3.5">
+            {biomarkers.map((b) => (
+              <li key={b.name} className="flex items-start gap-3">
+                <span
+                  aria-hidden
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-cyan"
+                />
+                <div>
+                  <div className="text-[14px] font-semibold text-brand-slate">
+                    {b.name}
+                  </div>
+                  <div className="text-[13px] leading-[1.6] text-brand-muted">
+                    {b.why}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <div className="my-6 h-px bg-brand-border" />
+
+      <div className="rounded-2xl border border-brand-border bg-brand-bg p-5 sm:p-6">
+        <h3 className="mb-2 font-serif text-[22px] leading-tight text-brand-slate">
+          {cta.title}
+        </h3>
+        <p className="mb-4 text-[14px] leading-[1.6] text-brand-result-desc">
+          {cta.body}
+        </p>
+        <a
+          href={ctaHref}
+          className="brand-cta-block block w-full text-center"
+        >
+          {cta.buttonLabel ?? "Book Bloodwork"} →
+        </a>
+        <div className="mt-4 text-[13px] leading-[1.5] text-brand-muted">
+          <div className="font-semibold text-brand-slate">
+            {cta.providerName}
+            {cta.providerCredential && (
+              <span className="font-normal text-brand-muted">
+                {" "}
+                · {cta.providerCredential}
+              </span>
+            )}
+          </div>
+          <a
+            href={phoneHref}
+            className="text-brand-cyan hover:underline"
+          >
+            {cta.providerPhone}
+          </a>
+          {cta.providerAddress && (
+            <div className="text-brand-muted">{cta.providerAddress}</div>
+          )}
+        </div>
+      </div>
+
+      <RestartButton onClick={onRestart} />
+
+      <style jsx>{`
+        .brand-cta-block {
+          background: var(--brand-cyan);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          padding: 16px 22px;
+          font-family: inherit;
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          cursor: pointer;
+          text-decoration: none;
+          box-shadow: var(--brand-cta-shadow);
+          transition: transform 0.18s ease, box-shadow 0.18s ease,
+            background 0.18s ease;
+        }
+        .brand-cta-block:hover {
+          background: var(--brand-cyan-deep);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 181, 204, 0.4);
+        }
+        .brand-cta-block:active {
+          transform: translateY(0);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ─── Shared ──────────────────────────────────────────────────────────── */
+
+function RestartButton({ onClick }: { onClick: () => void }) {
+  return (
+    <>
+      <button type="button" onClick={onClick} className="restart-btn mt-7 w-full">
         Start Over
       </button>
       <style jsx>{`
@@ -307,6 +477,6 @@ function ResultCard({
           color: var(--brand-slate);
         }
       `}</style>
-    </div>
+    </>
   );
 }

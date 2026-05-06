@@ -1,6 +1,7 @@
 import type { Quiz } from "@/lib/quiz/types";
 
 export const ivDripQuiz: Quiz = {
+  scoring: "top-tag",
   slug: "iv-drip",
   title: { lead: "Find Your Perfect", accent: "IV Drip" },
   subtitle:
