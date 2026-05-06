@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Relive Health Quizzes
 
-## Getting Started
+Personalized recommendation quizzes for Relive Health — built on Next.js with the App Router, deployed on Vercel.
 
-First, run the development server:
+Live quizzes:
+
+- **`/iv-drip`** — Find Your Perfect IV Drip (8 questions, 12 drip results)
+
+## Tech stack
+
+- Next.js 16 (App Router) + React 19
+- TypeScript
+- Tailwind CSS v4 (CSS-variables-based theme tokens in `globals.css`)
+- DM Sans + DM Serif Display via `next/font/google`
+- Static, no backend, no analytics, no tracking
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Adding a new quiz
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The whole site is a single quiz engine driven by typed content. To add a new quiz:
 
-## Learn More
+1. **Author the content.** Create `src/content/<slug>.ts` and export a `Quiz`:
 
-To learn more about Next.js, take a look at the following resources:
+   ```ts
+   import type { Quiz } from "@/lib/quiz/types";
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   export const myNewQuiz: Quiz = {
+     slug: "my-new-quiz",
+     title: { lead: "Discover Your", accent: "Match" },
+     subtitle: "Answer a few quick questions and we'll personalize a recommendation.",
+     introEmoji: "🌟",
+     shortDescription: "One-line tile copy for the landing page.",
+     landingEmoji: "🌟",
+     metaTitle: "Discover Your Match | Relive Health",
+     metaDescription: "...",
+     fallbackResult: "Default Result Key",
+     questions: [
+       /* { text, emoji, tags: [resultKey, ...], extras: [extraKey, ...] } */
+     ],
+     results: {
+       /* "Result Key": { name, emoji, tagline, desc, vitamins?: [...] } */
+     },
+     extras: {
+       /* "extraKey": { icon, title, text } */
+     },
+   };
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Register it.** Add the import + entry in `src/content/registry.ts`:
 
-## Deploy on Vercel
+   ```ts
+   import { myNewQuiz } from "./my-new-quiz";
+   export const quizzes: Quiz[] = [ivDripQuiz, myNewQuiz];
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Create the route.** `src/app/<slug>/page.tsx`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```tsx
+   import type { Metadata } from "next";
+   import { PageShell } from "@/components/PageShell";
+   import { QuizRunner } from "@/components/QuizRunner";
+   import { myNewQuiz } from "@/content/my-new-quiz";
+
+   export const metadata: Metadata = {
+     title: myNewQuiz.metaTitle,
+     description: myNewQuiz.metaDescription,
+   };
+
+   export default function Page() {
+     return (
+       <PageShell>
+         <QuizRunner quiz={myNewQuiz} />
+       </PageShell>
+     );
+   }
+   ```
+
+That's it — no engine code to touch.
+
+## Scoring rules (preserved from the original IV-quiz reference)
+
+- Each Yes answer adds +1 to every tag listed on that question.
+- Highest-scoring tag wins. **Ties resolve by the order tags were first encountered** while walking Yes-answered questions in question order — same stable behavior as `Object.entries(...).sort(...)` in the source HTML.
+- If no questions are answered Yes, `fallbackResult` is returned.
+- Extras are deduplicated and listed in question order.
+
+## Design system
+
+Tokens live as CSS variables in `src/app/globals.css` and are surfaced to Tailwind via the `@theme` block, so utilities like `bg-brand-cyan` and `text-brand-slate` are available everywhere.
+
+| Token | Hex |
+|---|---|
+| `brand-cyan` | `#00B5CC` |
+| `brand-cyan-dark` | `#008FA8` |
+| `brand-slate` | `#3D5A6E` |
+| `brand-bg` | `#F0F5F8` |
+| `brand-muted` | `#7A95A8` |
+| `brand-border` | `#DDE8EF` |
+
+## Deploying to Vercel
+
+1. Push this repo to GitHub:
+
+   ```bash
+   git remote add origin git@github.com:<you>/relive-quizzes.git
+   git push -u origin main
+   ```
+
+2. In Vercel: **Add New Project** → import the GitHub repo → accept defaults (framework auto-detected as Next.js, no env vars needed) → **Deploy**.
+
+3. Optional: attach a custom domain (e.g. `quiz.relivehealth.com`) in the Vercel project's **Settings → Domains**.
+
+No build-time configuration is required — `next build` works out of the box.
