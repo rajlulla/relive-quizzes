@@ -1,16 +1,23 @@
-import type { CountTierQuiz } from "@/lib/quiz/types";
+import type { TopTagQuiz } from "@/lib/quiz/types";
 
 /**
- * "Is your body trying to tell you something?" — bloodwork lead-gen quiz.
+ * "Is your body trying to tell you something?" — wellness lead-gen quiz.
  *
- * The aim is to surface a tier (early signal vs likely imbalance vs real
- * answers needed) and a short, prioritized list of biomarkers worth
- * checking — then push the visitor to book bloodwork. The recommendation
- * always lands on bloodwork; the depth of the panel scales with the
- * sections that triggered.
+ * Maps each Yes answer to one of two protocol axes:
+ *   - HRT (hormone therapy): Q1, Q2, Q4, Q5, Q9, Q10
+ *   - GLP (metabolic / GLP-1): Q6, Q7, Q8
+ *   - Q3 ("tired even when I do nothing") signals BOTH — fatigue rest
+ *     doesn't touch is non-specific between hormonal + metabolic.
+ *
+ * Result selection (top-tag scoring + mixedRule override):
+ *   - If HRT >= 2 AND GLP >= 2 → "Mixed" (both systems need attention)
+ *   - Else the higher-scoring axis wins
+ *   - If nobody answered Yes → "Mixed" (most general blurb)
+ *
+ * The phone is captured before the result reveal; staff follows up.
  */
-export const bodyCheckQuiz: CountTierQuiz = {
-  scoring: "count-tier",
+export const bodyCheckQuiz: TopTagQuiz = {
+  scoring: "top-tag",
   slug: "body-check",
   captureLead: true,
   title: { lead: "Is your body trying", accent: "to tell you something?" },
@@ -18,11 +25,14 @@ export const bodyCheckQuiz: CountTierQuiz = {
     "Answer yes or no honestly. There are no wrong answers — just information.",
   introEmoji: "🩺",
   shortDescription:
-    "10 quick questions about how you actually feel — and the biomarkers worth checking.",
+    "10 quick questions about how you actually feel — and what your body might be asking for.",
   landingEmoji: "🩺",
   metaTitle: "Is Your Body Trying to Tell You Something? | Relive Health",
   metaDescription:
-    "10 quick questions about sleep, mood, weight, and energy — and the biomarkers worth checking. Personalized bloodwork recommendations from Relive Health.",
+    "10 quick questions about sleep, mood, weight, and energy — and a personalized recommendation from Relive Health.",
+  fallbackResult: "Mixed",
+  nextStepsNote:
+    "Heather will reach out using the number you provided to schedule next steps.",
   sections: [
     { key: "sleep_energy", label: "Sleep & Energy" },
     { key: "mood_mind", label: "Mood & Mind" },
@@ -33,159 +43,84 @@ export const bodyCheckQuiz: CountTierQuiz = {
     {
       section: "sleep_energy",
       text: "I wake up during the night and struggle to fall back asleep",
+      tags: ["HRT"],
     },
     {
       section: "sleep_energy",
       text: "I feel exhausted all day but my sleep is restless or unrefreshing",
+      tags: ["HRT"],
     },
     {
       section: "sleep_energy",
       text: "I am tired even on days when I do nothing",
       hint: "Fatigue that rest doesn't touch.",
+      // Non-specific signal — points to either or both. Counted on
+      // both axes so the mixedRule can detect "you have both" cases.
+      tags: ["HRT", "GLP"],
     },
     {
       section: "mood_mind",
       text: "I feel anxious or irritable in ways that are new for me",
       hint: "Minor things set me off; on edge without a clear reason.",
+      tags: ["HRT"],
     },
     {
       section: "mood_mind",
       text: "My focus and memory are not what they used to be",
       hint: "Brain fog, forgetting words, difficulty concentrating.",
+      tags: ["HRT"],
     },
     {
       section: "weight_body",
       text: "My weight keeps going up even though I'm eating less and moving more",
+      tags: ["GLP"],
     },
     {
       section: "weight_body",
       text: "I'm gaining weight around my middle that wasn't there before",
+      tags: ["GLP"],
     },
     {
       section: "weight_body",
       text: "What used to work — diet, exercise, habits — simply doesn't anymore",
+      tags: ["GLP"],
     },
     {
       section: "doctor",
       text: "I've been told my labs are normal — but I don't feel normal",
+      tags: ["HRT"],
     },
     {
       section: "doctor",
       text: "I feel like a different version of myself and I don't know why",
       hint: "The person I used to be has become harder to access.",
+      tags: ["HRT"],
     },
   ],
-  tiers: [
-    {
-      minYes: 0,
-      label: "Baseline Check-In",
-      headline: "You're listening to your body — let's get a baseline.",
-      description:
-        "Even when nothing feels off, a foundational panel tells you where you stand and gives us numbers to compare against later. Knowing your baseline is one of the best long-term investments in your health.",
-      emoji: "🌿",
-    },
-    {
-      minYes: 1,
-      label: "1–3 · Early Signals",
-      headline: "Early signals worth addressing now.",
-      description:
-        "What you're noticing usually shows up in your bloodwork before it becomes a bigger pattern. A targeted panel can catch this early — when small adjustments do the most work.",
-      emoji: "🔍",
-    },
-    {
-      minYes: 4,
-      label: "4–6 · Imbalance Likely",
-      headline: "A hormonal or metabolic imbalance is likely.",
-      description:
-        "When this many signals stack up across sleep, mood, and weight, it usually isn't willpower — it's biology. The good news: most of what's driving this is measurable, and once we see the numbers, we know exactly what to address.",
+  mixedRule: {
+    primary: "HRT",
+    secondary: "GLP",
+    mixedKey: "Mixed",
+    threshold: 2,
+  },
+  results: {
+    HRT: {
+      name: "Hormone Therapy",
       emoji: "⚖️",
+      tagline: "Get back to yourself",
+      desc: "Your results suggest your hormones may be at the root of what you're feeling. Shifts in estrogen, progesterone, and testosterone affect sleep, mood, focus, and how you feel in your own skin — and standard lab panels often miss it entirely. The good news: these are addressable. A comprehensive hormone workup can identify exactly what's out of balance and give us a roadmap to get you back to yourself.",
     },
-    {
-      minYes: 7,
-      label: "7+ · Real Answers Needed",
-      headline: "Your body is asking for real answers.",
-      description:
-        "This many signals together is your body waving a flag. A comprehensive bloodwork panel — read by a clinician who's looking at the full picture — is the fastest way to stop guessing and start feeling like yourself again.",
-      emoji: "🚨",
+    GLP: {
+      name: "Metabolic Reset",
+      emoji: "🔥",
+      tagline: "Your biology, recalibrated",
+      desc: "Your results suggest a metabolic shift may be working against you. When the body's insulin response, hunger signals, and fat storage patterns change — and they do change with age — doing more of what used to work stops working. This isn't a willpower problem. It's a biology problem. And biology can be addressed with the right clinical support, nutrition strategy, and coaching.",
     },
-  ],
-  biomarkers: {
-    thyroid_basic: {
-      name: "Comprehensive Thyroid Panel",
-      why: "TSH alone misses a lot. A full panel (Free T3, Free T4, Reverse T3, antibodies) reveals fatigue, weight, and brain-fog drivers a standard screen can't see.",
+    Mixed: {
+      name: "Comprehensive Workup",
+      emoji: "🎯",
+      tagline: "Find your biggest roadblock first",
+      desc: "Your results suggest more than one system may need attention. Hormonal imbalance and metabolic resistance often show up together — each one making the other harder to manage. The most effective approach starts with a comprehensive workup to identify your biggest roadblock first, then build a personalized plan around it. This is exactly what we do.",
     },
-    thyroid_full: {
-      name: "Full Thyroid + Antibodies",
-      why: "Adds Reverse T3 and TPO/TG antibodies — catches autoimmune thyroid patterns and conversion issues behind unexplained fatigue and weight gain.",
-    },
-    cortisol: {
-      name: "AM/PM Cortisol Rhythm",
-      why: "Your stress hormone has a daily rhythm. When it flips, you wake at 3 AM, crash mid-afternoon, and feel wired-but-tired. A diurnal cortisol panel shows the pattern.",
-    },
-    vitd: {
-      name: "Vitamin D (25-OH)",
-      why: "One of the most common deficiencies behind fatigue, low mood, and immune issues. Easy to fix once you know your level.",
-    },
-    ferritin: {
-      name: "Iron + Ferritin",
-      why: "Low iron stores cause fatigue, restless sleep, and brain fog long before standard hemoglobin flags it as anemia.",
-    },
-    b12_folate: {
-      name: "B12 + Folate (with MMA)",
-      why: "Drives energy, mood, and methylation. Low-normal B12 still causes brain fog — methylmalonic acid catches what serum B12 alone misses.",
-    },
-    insulin_a1c: {
-      name: "Fasting Insulin + HbA1c",
-      why: "Insulin resistance often shows up years before glucose does. These two together are the earliest warning that metabolism is shifting.",
-    },
-    sex_hormones: {
-      name: "Estradiol, Progesterone, Testosterone",
-      why: "The hormonal trio behind sleep changes, mood swings, midsection weight gain, and 'I don't feel like myself.' Worth measuring at the right cycle day.",
-    },
-    dhea: {
-      name: "DHEA-S",
-      why: "Your master adrenal hormone. Often suppressed under chronic stress — drives drive, libido, and recovery.",
-    },
-    crp: {
-      name: "hs-CRP (Inflammation)",
-      why: "A simple marker of systemic inflammation. Elevated when immune, metabolic, or hormonal systems are under strain.",
-    },
-    omega3: {
-      name: "Omega-3 Index",
-      why: "Brain function, mood stability, and inflammation control all hinge on having enough EPA/DHA. Most people are below the protective range.",
-    },
-    metabolic_full: {
-      name: "Comprehensive Metabolic Panel",
-      why: "Liver, kidney, and electrolyte function — the foundation that everything else builds on. Standard labs miss subtle patterns; we read them in context.",
-    },
-  },
-  biomarkersBySection: {
-    sleep_energy: ["thyroid_full", "cortisol", "ferritin", "vitd", "b12_folate"],
-    mood_mind: ["cortisol", "vitd", "b12_folate", "omega3", "sex_hormones"],
-    weight_body: [
-      "insulin_a1c",
-      "thyroid_full",
-      "sex_hormones",
-      "cortisol",
-      "dhea",
-    ],
-    doctor: [
-      "thyroid_full",
-      "sex_hormones",
-      "cortisol",
-      "crp",
-      "metabolic_full",
-    ],
-  },
-  defaultBiomarkers: ["thyroid_basic", "vitd", "metabolic_full"],
-  maxBiomarkers: 5,
-  biomarkersLabel: "Biomarkers Worth Checking",
-  cta: {
-    title: "What happens next.",
-    body: "Heather will reach out using the number you provided to schedule personalized bloodwork around what you're actually experiencing — then walk you through the results and turn numbers into a plan.",
-    providerName: "Heather Robbie",
-    providerCredential: "NP-C, Relive Health",
-    providerPhone: "(973) 490-4541",
-    providerAddress: "187 Columbia Turnpike, Florham Park NJ",
   },
 };

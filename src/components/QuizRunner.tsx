@@ -159,10 +159,9 @@ function QuizCard({
   onRestart: () => void;
 }) {
   const q = quiz.questions[currentIndex];
-  const sectionLabel =
-    q.section &&
-    quiz.scoring === "count-tier" &&
-    quiz.sections?.find((s) => s.key === q.section)?.label;
+  const sectionLabel = q.section
+    ? quiz.sections?.find((s) => s.key === q.section)?.label
+    : undefined;
 
   return (
     <div className="brand-card px-8 py-10 sm:px-12 sm:py-12">
@@ -339,6 +338,12 @@ function TopTagResultCard({
             ))}
           </div>
         </>
+      )}
+
+      {quiz.nextStepsNote && (
+        <p className="mt-7 text-center text-[13px] italic leading-[1.6] text-brand-muted">
+          {quiz.nextStepsNote}
+        </p>
       )}
 
       <RestartButton onClick={onRestart} />

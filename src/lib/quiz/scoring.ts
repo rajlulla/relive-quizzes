@@ -14,6 +14,11 @@ import type {
  * encountered (insertion order while walking Yes-answered questions) wins —
  * matches the original HTML reference's stable-sort behavior on
  * `Object.entries`.
+ *
+ * If a `mixedRule` is set on the quiz and BOTH the primary and secondary
+ * tags meet the threshold, the rule's `mixedKey` is returned regardless
+ * of who would otherwise win. This lets quizzes express "you have
+ * meaningful signal in both axes — recommend the combined result."
  */
 export function getRecommendationKey(
   quiz: TopTagQuiz,
@@ -31,6 +36,15 @@ export function getRecommendationKey(
   });
 
   if (insertionOrder.length === 0) return quiz.fallbackResult;
+
+  if (quiz.mixedRule) {
+    const { primary, secondary, mixedKey, threshold } = quiz.mixedRule;
+    const primaryScore = scores[primary] ?? 0;
+    const secondaryScore = scores[secondary] ?? 0;
+    if (primaryScore >= threshold && secondaryScore >= threshold) {
+      return mixedKey;
+    }
+  }
 
   let bestKey = insertionOrder[0];
   let bestScore = scores[bestKey];

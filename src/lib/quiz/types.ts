@@ -98,12 +98,33 @@ interface BaseQuiz {
   metaTitle: string;
   metaDescription: string;
   questions: Question[];
+  /** Optional section list (rendered as eyebrows above grouped questions). */
+  sections?: QuizSection[];
   /**
    * When true, gate the result reveal on a phone-number capture step.
    * The number is POSTed to `/api/leads` and forwarded to whatever
    * sink is configured server-side (Google Sheet, etc.). Defaults to false.
    */
   captureLead?: boolean;
+  /**
+   * Small italic line shown at the bottom of the result card. Useful for
+   * lead-capture quizzes that want to remind the user "we'll be in touch."
+   */
+  nextStepsNote?: string;
+}
+
+/**
+ * Optional override on top-tag scoring: when two specific tags both
+ * score at or above `threshold`, return the `mixedKey` result instead
+ * of the regular highest-score winner. Lets a quiz cleanly express
+ * "you have meaningful signal in BOTH categories — recommend the
+ * combined-workup result."
+ */
+export interface MixedRule {
+  primary: string;
+  secondary: string;
+  mixedKey: string;
+  threshold: number;
 }
 
 export interface TopTagQuiz extends BaseQuiz {
@@ -111,12 +132,11 @@ export interface TopTagQuiz extends BaseQuiz {
   results: Record<string, ResultProfile>;
   fallbackResult: string;
   extras?: Record<string, ExtraRec>;
+  mixedRule?: MixedRule;
 }
 
 export interface CountTierQuiz extends BaseQuiz {
   scoring: "count-tier";
-  /** Optional section list (rendered as eyebrows above grouped questions). */
-  sections?: QuizSection[];
   /** Tier definitions. Sorted ascending by `minYes` at evaluation time. */
   tiers: Tier[];
   /** All biomarkers, keyed by id. */
