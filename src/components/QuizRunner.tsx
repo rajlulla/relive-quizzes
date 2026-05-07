@@ -15,6 +15,7 @@ import {
 } from "@/lib/quiz/scoring";
 import { ProgressHeader } from "./ProgressHeader";
 import { LeadCaptureCard } from "./LeadCaptureCard";
+import { RestartLink } from "./RestartLink";
 
 type Stage = "intro" | "quiz" | "leadCapture" | "result";
 
@@ -68,12 +69,14 @@ export function QuizRunner({ quiz }: QuizRunnerProps) {
           quiz={quiz}
           currentIndex={currentIndex}
           onAnswer={submitAnswer}
+          onRestart={restart}
         />
       )}
       {stage === "leadCapture" && leadPayload && (
         <LeadCaptureCard
           payload={leadPayload}
           onSubmitted={() => setStage("result")}
+          onRestart={restart}
         />
       )}
       {stage === "result" &&
@@ -148,10 +151,12 @@ function QuizCard({
   quiz,
   currentIndex,
   onAnswer,
+  onRestart,
 }: {
   quiz: Quiz;
   currentIndex: number;
   onAnswer: (yes: boolean) => void;
+  onRestart: () => void;
 }) {
   const q = quiz.questions[currentIndex];
   const sectionLabel =
@@ -199,6 +204,8 @@ function QuizCard({
           ✗ No
         </button>
       </div>
+      <RestartLink onClick={onRestart} />
+
       <style jsx>{`
         .answer-btn {
           flex: 1;
@@ -472,6 +479,10 @@ function CountTierResultCard({
 
 /* ─── Shared ──────────────────────────────────────────────────────────── */
 
+/**
+ * Full-width muted button. Used at the bottom of the result card as the
+ * primary "I'm done" affordance.
+ */
 function RestartButton({ onClick }: { onClick: () => void }) {
   return (
     <>
@@ -499,3 +510,4 @@ function RestartButton({ onClick }: { onClick: () => void }) {
     </>
   );
 }
+

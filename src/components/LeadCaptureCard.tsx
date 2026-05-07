@@ -2,16 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatPhone, isValidPhone, normalizePhone } from "@/lib/phone";
+import { RestartLink } from "./RestartLink";
 
 interface LeadCaptureCardProps {
   /** Called once the user submits a valid phone (after the API call resolves,
    *  even if the API call failed — we never block result reveal). */
   onSubmitted: (normalizedPhone: string) => void;
+  /** Mid-flow restart — clears answers + sends user back to intro. */
+  onRestart: () => void;
   /** POSTed alongside the phone number for storage. */
   payload: Record<string, unknown>;
 }
 
-export function LeadCaptureCard({ onSubmitted, payload }: LeadCaptureCardProps) {
+export function LeadCaptureCard({
+  onSubmitted,
+  onRestart,
+  payload,
+}: LeadCaptureCardProps) {
   const [raw, setRaw] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +105,8 @@ export function LeadCaptureCard({ onSubmitted, payload }: LeadCaptureCardProps) 
       >
         {submitting ? "Showing your results…" : "See My Results →"}
       </button>
+
+      <RestartLink onClick={onRestart} />
 
       <style jsx>{`
         .brand-cta-pill {
