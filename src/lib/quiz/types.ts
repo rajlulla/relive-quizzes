@@ -98,6 +98,12 @@ interface BaseQuiz {
   metaTitle: string;
   metaDescription: string;
   questions: Question[];
+  /**
+   * When true, gate the result reveal on a phone-number capture step.
+   * The number is POSTed to `/api/leads` and forwarded to whatever
+   * sink is configured server-side (Google Sheet, etc.). Defaults to false.
+   */
+  captureLead?: boolean;
 }
 
 export interface TopTagQuiz extends BaseQuiz {

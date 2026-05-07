@@ -11,10 +11,12 @@ import {
   evaluateCountTier,
   getExtraKeys,
   getRecommendationKey,
+  summarizeResult,
 } from "@/lib/quiz/scoring";
 import { ProgressHeader } from "./ProgressHeader";
+import { LeadCaptureCard } from "./LeadCaptureCard";
 
-type Stage = "intro" | "quiz" | "result";
+type Stage = "intro" | "quiz" | "leadCapture" | "result";
 
 interface QuizRunnerProps {
   quiz: Quiz;
@@ -43,9 +45,20 @@ export function QuizRunner({ quiz }: QuizRunnerProps) {
     if (currentIndex < quiz.questions.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
-      setStage("result");
+      setStage(quiz.captureLead ? "leadCapture" : "result");
     }
   };
+
+  const leadPayload = useMemo(() => {
+    if (!quiz.captureLead) return null;
+    const summary = summarizeResult(quiz, answers);
+    return {
+      quizSlug: quiz.slug,
+      timestamp: new Date().toISOString(),
+      answers,
+      ...summary,
+    };
+  }, [quiz, answers]);
 
   return (
     <div key={stage} className="brand-fade-in">
@@ -55,6 +68,12 @@ export function QuizRunner({ quiz }: QuizRunnerProps) {
           quiz={quiz}
           currentIndex={currentIndex}
           onAnswer={submitAnswer}
+        />
+      )}
+      {stage === "leadCapture" && leadPayload && (
+        <LeadCaptureCard
+          payload={leadPayload}
+          onSubmitted={() => setStage("result")}
         />
       )}
       {stage === "result" &&

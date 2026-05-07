@@ -106,6 +106,35 @@ Tokens live as CSS variables in `src/app/globals.css` and are surfaced to Tailwi
 | `brand-muted` | `#7A95A8` |
 | `brand-border` | `#DDE8EF` |
 
+## Lead capture (phone number → Google Sheet)
+
+When `captureLead: true` is set on a quiz, the runner inserts an "almost done — what's your phone number?" step between the last answer and the result. The phone number plus the full answer set + derived result is POSTed to `/api/leads`, which forwards it to a Google Sheet via Apps Script.
+
+**One-time Sheet setup:**
+
+1. Create a new Google Sheet — name it whatever you like (e.g. "Relive Quiz Leads").
+2. Extensions → Apps Script. Replace the default `Code.gs` with the contents of [`scripts/leads-sheet.gs`](scripts/leads-sheet.gs).
+3. In the script, replace `SHARED_SECRET = "REPLACE-ME-WITH-A-RANDOM-STRING"` with a random string (generate one however you like — `openssl rand -hex 16` works).
+4. Deploy → **New deployment** → choose **Web app**:
+   - **Execute as:** Me
+   - **Who has access:** Anyone
+5. Click Deploy, authorize, and copy the resulting `…/exec` URL.
+
+**One-time Vercel setup:**
+
+In your Vercel project → Settings → Environment Variables, add (for **Production**, **Preview**, and **Development**):
+
+| Name | Value |
+|---|---|
+| `LEADS_WEBHOOK_URL` | the `/exec` URL from the Apps Script deploy |
+| `LEADS_WEBHOOK_SECRET` | the same random string you set in the script |
+
+Redeploy (a fresh `git push` does it, or click **Redeploy** on the latest deployment in the Vercel UI). New leads will start landing in the sheet — first row gets a frozen header (`Timestamp`, `Quiz`, `Phone`, `Result`, `Yes Count`, `Recommendations`, `Extras`, `Answers (JSON)`).
+
+**Sharing with the team:** add Vikas as a viewer on the sheet — he sees every lead in real time, no extra wiring.
+
+**If `LEADS_WEBHOOK_URL` is unset:** leads are dropped (with a warning logged to Vercel) but the user-facing flow still works — the result reveals as normal. Same if the Apps Script ever errors out: the user never sees a failure, the lead is logged in Vercel runtime logs for backfill.
+
 ## Deploying to Vercel
 
 1. Push this repo to GitHub:

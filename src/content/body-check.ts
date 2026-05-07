@@ -12,6 +12,7 @@ import type { CountTierQuiz } from "@/lib/quiz/types";
 export const bodyCheckQuiz: CountTierQuiz = {
   scoring: "count-tier",
   slug: "body-check",
+  captureLead: true,
   title: { lead: "Is your body trying", accent: "to tell you something?" },
   subtitle:
     "Answer yes or no honestly. There are no wrong answers — just information.",

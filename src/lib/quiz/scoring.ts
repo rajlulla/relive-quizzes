@@ -2,6 +2,7 @@ import type {
   Answers,
   Biomarker,
   CountTierQuiz,
+  Quiz,
   Tier,
   TopTagQuiz,
 } from "./types";
@@ -118,3 +119,39 @@ export function evaluateCountTier(
 
   return { yesCount, tier, biomarkers };
 }
+
+/* ─── Result summary (for storage / lead capture) ────────────────────── */
+
+export interface ResultSummary {
+  /** Human-readable result label (drip name OR tier label). */
+  result: string;
+  /** Yes-count (count-tier only; undefined for top-tag). */
+  yesCount?: number;
+  /** Recommended item names (vitamin names OR biomarker names). */
+  recommendations: string[];
+  /** Extra recommendation keys (top-tag only). */
+  extras?: string[];
+}
+
+/**
+ * Reduces an answer set to a flat human-readable summary, suitable for
+ * storage in a Google Sheet row or a lead-capture log.
+ */
+export function summarizeResult(quiz: Quiz, answers: Answers): ResultSummary {
+  if (quiz.scoring === "top-tag") {
+    const key = getRecommendationKey(quiz, answers);
+    const profile = quiz.results[key] ?? quiz.results[quiz.fallbackResult];
+    return {
+      result: key,
+      recommendations: (profile?.vitamins ?? []).map((v) => v.name),
+      extras: getExtraKeys(quiz, answers),
+    };
+  }
+  const { yesCount, tier, biomarkers } = evaluateCountTier(quiz, answers);
+  return {
+    result: tier.label,
+    yesCount,
+    recommendations: biomarkers.map((b) => b.name),
+  };
+}
+

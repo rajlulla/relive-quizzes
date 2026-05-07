@@ -3,6 +3,7 @@ import type { Quiz } from "@/lib/quiz/types";
 export const ivDripQuiz: Quiz = {
   scoring: "top-tag",
   slug: "iv-drip",
+  captureLead: true,
   title: { lead: "Find Your Perfect", accent: "IV Drip" },
   subtitle:
     "Answer 8 quick questions and we'll recommend the IV drip best suited to what your body needs right now.",
