@@ -30,7 +30,7 @@ export const bodyCheckQuiz: TopTagQuiz = {
   metaTitle: "Is Your Body Trying to Tell You Something? | Relive Health",
   metaDescription:
     "10 quick questions about sleep, mood, weight, and energy — and a personalized recommendation from Relive Health.",
-  fallbackResult: "Mixed",
+  fallbackResult: "HRT and GLP",
   nextStepsNote:
     "Heather will reach out using the number you provided to schedule next steps.",
   sections: [
@@ -100,26 +100,26 @@ export const bodyCheckQuiz: TopTagQuiz = {
   mixedRule: {
     primary: "HRT",
     secondary: "GLP",
-    mixedKey: "Mixed",
+    mixedKey: "HRT and GLP",
     threshold: 2,
   },
   results: {
     HRT: {
-      name: "Hormone Therapy",
+      name: "HRT",
       emoji: "⚖️",
-      tagline: "Get back to yourself",
+      tagline: "Hormone replacement therapy",
       desc: "Your results suggest your hormones may be at the root of what you're feeling. Shifts in estrogen, progesterone, and testosterone affect sleep, mood, focus, and how you feel in your own skin — and standard lab panels often miss it entirely. The good news: these are addressable. A comprehensive hormone workup can identify exactly what's out of balance and give us a roadmap to get you back to yourself.",
     },
     GLP: {
-      name: "Metabolic Reset",
+      name: "GLP",
       emoji: "🔥",
-      tagline: "Your biology, recalibrated",
+      tagline: "GLP-1 metabolic therapy",
       desc: "Your results suggest a metabolic shift may be working against you. When the body's insulin response, hunger signals, and fat storage patterns change — and they do change with age — doing more of what used to work stops working. This isn't a willpower problem. It's a biology problem. And biology can be addressed with the right clinical support, nutrition strategy, and coaching.",
     },
-    Mixed: {
-      name: "Comprehensive Workup",
+    "HRT and GLP": {
+      name: "HRT and GLP",
       emoji: "🎯",
-      tagline: "Find your biggest roadblock first",
+      tagline: "Both protocols, sequenced for you",
       desc: "Your results suggest more than one system may need attention. Hormonal imbalance and metabolic resistance often show up together — each one making the other harder to manage. The most effective approach starts with a comprehensive workup to identify your biggest roadblock first, then build a personalized plan around it. This is exactly what we do.",
     },
   },
