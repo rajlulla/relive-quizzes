@@ -362,8 +362,6 @@ function CountTierResultCard({
     [quiz, answers],
   );
   const cta = quiz.cta;
-  const phoneHref = `tel:${cta.providerPhone.replace(/[^0-9+]/g, "")}`;
-  const ctaHref = cta.href ?? phoneHref;
 
   return (
     <div className="brand-card px-8 py-9 sm:px-12 sm:py-10">
@@ -417,13 +415,7 @@ function CountTierResultCard({
         <p className="mb-4 text-[14px] leading-[1.6] text-brand-result-desc">
           {cta.body}
         </p>
-        <a
-          href={ctaHref}
-          className="brand-cta-block block w-full text-center"
-        >
-          {cta.buttonLabel ?? "Book Bloodwork"} →
-        </a>
-        <div className="mt-4 text-[13px] leading-[1.5] text-brand-muted">
+        <div className="text-[13px] leading-[1.5] text-brand-muted">
           <div className="font-semibold text-brand-slate">
             {cta.providerName}
             {cta.providerCredential && (
@@ -433,12 +425,9 @@ function CountTierResultCard({
               </span>
             )}
           </div>
-          <a
-            href={phoneHref}
-            className="text-brand-cyan hover:underline"
-          >
-            {cta.providerPhone}
-          </a>
+          {cta.providerPhone && (
+            <div className="text-brand-muted">{cta.providerPhone}</div>
+          )}
           {cta.providerAddress && (
             <div className="text-brand-muted">{cta.providerAddress}</div>
           )}
@@ -446,33 +435,6 @@ function CountTierResultCard({
       </div>
 
       <RestartButton onClick={onRestart} />
-
-      <style jsx>{`
-        .brand-cta-block {
-          background: var(--brand-cyan);
-          color: white;
-          border: none;
-          border-radius: 12px;
-          padding: 16px 22px;
-          font-family: inherit;
-          font-size: 15px;
-          font-weight: 600;
-          letter-spacing: 0.3px;
-          cursor: pointer;
-          text-decoration: none;
-          box-shadow: var(--brand-cta-shadow);
-          transition: transform 0.18s ease, box-shadow 0.18s ease,
-            background 0.18s ease;
-        }
-        .brand-cta-block:hover {
-          background: var(--brand-cyan-deep);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0, 181, 204, 0.4);
-        }
-        .brand-cta-block:active {
-          transform: translateY(0);
-        }
-      `}</style>
     </div>
   );
 }

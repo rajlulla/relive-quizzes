@@ -181,12 +181,11 @@ export const bodyCheckQuiz: CountTierQuiz = {
   maxBiomarkers: 5,
   biomarkersLabel: "Biomarkers Worth Checking",
   cta: {
-    title: "Get a personalized bloodwork plan.",
-    body: "Bring this list — or skip it and let Heather pull together a panel built around what you're actually experiencing. We'll review the results with you and turn numbers into a plan.",
+    title: "What happens next.",
+    body: "Heather will reach out using the number you provided to schedule personalized bloodwork around what you're actually experiencing — then walk you through the results and turn numbers into a plan.",
     providerName: "Heather Robbie",
     providerCredential: "NP-C, Relive Health",
     providerPhone: "(973) 490-4541",
     providerAddress: "187 Columbia Turnpike, Florham Park NJ",
-    buttonLabel: "Book Bloodwork With Heather",
   },
 };

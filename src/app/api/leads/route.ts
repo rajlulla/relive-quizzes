@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { isValidPhone } from "@/lib/phone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,7 +40,12 @@ export async function POST(req: Request) {
   }
 
   const phone = typeof body.phone === "string" ? body.phone : "";
-  if (!isValidPhone(phone)) {
+  // Accept either 10 raw digits (client-typed) or 11 digits starting with 1
+  // (the +1XXXXXXXXXX form the client normalizes to before posting).
+  const digits = phone.replace(/\D/g, "");
+  const validPhone =
+    digits.length === 10 || (digits.length === 11 && digits.startsWith("1"));
+  if (!validPhone) {
     return NextResponse.json(
       { ok: false, error: "invalid_phone" },
       { status: 400 },

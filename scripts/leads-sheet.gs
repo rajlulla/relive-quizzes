@@ -1,6 +1,10 @@
 /**
  * Relive Quizzes — Google Sheets lead-capture endpoint.
  *
+ * Each incoming lead is appended to a tab named after the quiz slug
+ * (e.g. "iv-drip", "body-check"). Missing tabs are created on first
+ * write and get a frozen header row automatically.
+ *
  * Setup:
  *   1. Open the Google Sheet you want leads written to.
  *   2. Extensions → Apps Script.
@@ -16,9 +20,9 @@
  *        LEADS_WEBHOOK_SECRET = the random string from step 4
  *      Redeploy (push any tiny change, or click Redeploy in the Vercel UI).
  *
- * Re-deploying the script: bump the deployment "version" and the URL
- * stays the same. If you ever need to rotate the secret, update both
- * sides at once.
+ * Updating: paste in new code, then "Deploy → Manage deployments" →
+ * pencil icon → Version: New version → Deploy. The /exec URL stays the
+ * same. If you ever need to rotate the secret, update both sides at once.
  */
 
 const SHARED_SECRET = "REPLACE-ME-WITH-A-RANDOM-STRING";
@@ -45,12 +49,8 @@ function doPost(e) {
       return jsonResponse({ ok: false, error: "unauthorized" });
     }
 
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(HEADERS);
-      sheet.setFrozenRows(1);
-    }
+    const tabName = (body.quizSlug || "unknown").toString().slice(0, 100);
+    const sheet = getOrCreateTab(tabName);
 
     sheet.appendRow([
       body.timestamp || new Date().toISOString(),
@@ -63,10 +63,24 @@ function doPost(e) {
       JSON.stringify(body.answers || {}),
     ]);
 
-    return jsonResponse({ ok: true });
+    return jsonResponse({ ok: true, tab: tabName });
   } catch (err) {
     return jsonResponse({ ok: false, error: String(err) });
   }
+}
+
+function getOrCreateTab(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold");
+  }
+  return sheet;
 }
 
 function jsonResponse(payload) {
